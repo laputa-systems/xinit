@@ -852,8 +852,10 @@ proc pid_alive(pid: Int) [process] -> Bool {
     return false
   }
 
-  let alive = match process.kill(pid, "0") { Ok(_) => true, Err(_) => false }
-  return alive
+  match process.kill(pid, "0") {
+    Ok(_) => true
+    Err(_) => false
+  }
 }
 
 # The kernel start time (epoch ms) of a live pid, or 0 if it is not found.
@@ -972,7 +974,7 @@ proc log_path(name: Str) [env, error] -> Result[Path] {
 }
 
 proc rotated_log_path(current: Path, index: Int) [error] -> Result[Path] {
-  return Path.parse(f"${current.display()}.${index}")?
+  return fp"${current.display()}.${index}"
 }
 
 # Rotate a service's `current` log, keeping `keep` numbered copies
