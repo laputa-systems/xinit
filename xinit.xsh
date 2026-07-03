@@ -119,15 +119,15 @@ proc env_int(name: Str, fallback: Int) [env, error] -> Result[Int] {
 }
 
 proc service_dir() [env, error] -> Result[Path] {
-  return Path.parse(env_value("XINIT_SERVICE_DIR", "/usr/lib/xinit/services"))?
+  return fp"${env_value("XINIT_SERVICE_DIR", "/usr/lib/xinit/services")}"
 }
 
 proc run_dir() [env, error] -> Result[Path] {
-  return Path.parse(env_value("XINIT_RUN_DIR", "/run/xinit"))?
+  return fp"${env_value("XINIT_RUN_DIR", "/run/xinit")}"
 }
 
 proc log_root() [env, error] -> Result[Path] {
-  return Path.parse(env_value("XINIT_LOG_ROOT", "/var/log"))?
+  return fp"${env_value("XINIT_LOG_ROOT", "/var/log")}"
 }
 
 proc inbox_dir() [env, error] -> Result[Path] {
@@ -374,7 +374,7 @@ proc finalize(kind: Str) [fs, process, env, time, error] {
   let action_log = env_value("XSH_INIT_TEST_ACTION_LOG", "")
 
   if action_log != "" {
-    Path.parse(action_log)?.write(f"""${kind}
+    fp"${action_log}".write(f"""${kind}
 """)?
 
     return
@@ -464,7 +464,7 @@ proc run_pid1(inittab: Path) [fs, process, env, time, error] {
 
 proc service_path(target: Str) [env, error] -> Result[Path] {
   if "/" in target or target.ends_with(".xsh") {
-    return Path.parse(target)?
+    return fp"${target}"
   }
 
   return fp"${service_dir()?.display()}/${target}.xsh"
@@ -1261,7 +1261,7 @@ proc start_service(name: Str) [fs, process, env, time, error] {
     }
   }
 
-  print ${status_line(last)}
+  print status_line(last)
 }
 
 proc running_dependents(name: Str) [fs, process, env, error] -> Result[List[Str]] {
@@ -1320,7 +1320,7 @@ proc stop_service(name: Str) [fs, process, env, time, error] {
   }
 
   write_status(stopped)?
-  print ${status_line(stopped)}
+  print status_line(stopped)
 }
 
 proc restart_service(name: Str) [fs, process, env, time, error] {
@@ -1334,7 +1334,7 @@ proc restart_service(name: Str) [fs, process, env, time, error] {
 
   stop_service(name)?
   let status = start_one_service(name)?
-  print ${status_line(status)}
+  print status_line(status)
 }
 
 proc reload_service(name: Str) [fs, process, env, time, error] {
@@ -1345,7 +1345,7 @@ proc reload_service(name: Str) [fs, process, env, time, error] {
 
   let current = read_status(name)?
   reload_unit(load_service(name)?, current.pid)?
-  print ${status_line(current)}
+  print status_line(current)
 }
 
 proc show_status(name: Str) [fs, process, env, error] {
@@ -1369,7 +1369,7 @@ proc show_status(name: Str) [fs, process, env, error] {
     Err(_) => {}
   }
 
-  print ${status_line(current)}
+  print status_line(current)
 }
 
 proc show_logs(name: Str) [fs, env, error, io] {
@@ -2026,7 +2026,7 @@ proc boot_target(target: Str) [fs, process, env, time, error] {
     last = start_one_service(item)?
   }
 
-  print ${status_line(last)}
+  print status_line(last)
 }
 
 proc list_services() [fs, process, env, error] {
@@ -2087,7 +2087,7 @@ proc control(argv: List[Str]) [fs, process, env, time, error, io] {
 
 proc main(...argv: List[Str]) [fs, process, env, time, error, io] {
   if argv.len() == 0 {
-    run_pid1(Path.parse(env_value("XSH_INIT_INITTAB", "/etc/inittab"))?)?
+    run_pid1(fp"${env_value("XSH_INIT_INITTAB", "/etc/inittab")}")?
     return
   }
 
@@ -2137,7 +2137,7 @@ proc main(...argv: List[Str]) [fs, process, env, time, error, io] {
   } else if argv[0].starts_with("-") {
     return Err(XinitError.Failed("xinit-control", f"unknown option '${argv[0]}'"))
   } else if argv.len() == 1 {
-    run_pid1(Path.parse(argv[0])?)?
+    run_pid1(fp"${argv[0]}")?
   } else {
     return Err(XinitError.Failed("xinit-control", "usage: xinit [start|stop|status|logs|supervise SERVICE]"))
   }
