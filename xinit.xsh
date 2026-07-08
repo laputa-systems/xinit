@@ -1,4 +1,4 @@
-#!/usr/local/bin/xsh --
+#!/bin/xsh --
 error XinitError = Failed(kind: Str, message: Str)
 
 type InittabEntry = {key: Str, id: Str, action: Str, command: Str, argv: List[Str]}
@@ -663,19 +663,14 @@ proc load_service(target: Str) [fs, process, env, error] -> Result[Service] {
 
 proc all_services() [fs, process, env, error] -> Result[List[Service]] {
   let dir = service_dir()?
-  var out: List[Service] = []
 
   if ! dir.exists()? {
-    return out
+    return []
   }
 
-  for entry in fs.children(dir)?
+  return [load_service_path(entry.path)? for entry in fs.children(dir)?
     |> where .kind == "file" and .name.ends_with(".xsh")
-    |> sort-by .name {
-    out = out.push(load_service_path(entry.path)?)
-  }
-
-  return out
+    |> sort-by .name]
 }
 
 pure service_names(services: List[Service]) -> List[Str] {

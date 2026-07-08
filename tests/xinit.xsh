@@ -77,7 +77,7 @@ ttyS1::poweroff:/bin/echo "login: ttyS1"
   shell_syntax.write("""::sysinit:/bin/echo ok && /bin/echo no
 """)?
 
-  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_SIGNAL=TERM XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_SIGNAL=TERM xsh_bin() xinit_script() -- valid ?
+  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_SIGNAL=TERM XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_SIGNAL=TERM xsh_bin() xinit_script() -- $valid ?
 
   test.eq(
     output,
@@ -87,9 +87,9 @@ down: ok
 """,
   )?
 
-  let unsupported_status = run.status XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- unsupported 2> $err
+  let unsupported_status = run.status XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- $unsupported 2> $err
   assert_failed_with(unsupported_status, err, "unsupported action 'bogus'")?
-  let shell_status = run.status XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- shell_syntax 2> $err
+  let shell_status = run.status XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- $shell_syntax 2> $err
   assert_failed_with(shell_status, err, "shell syntax")?
 }
 
@@ -105,7 +105,7 @@ proc test_wait_once_respawn_and_poweroff(ctx: TestContext) [fs, process, error] 
 ::respawn:/usr/bin/respawn-service
 """)?
 
-  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_EXIT_WHEN_IDLE=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_INIT_TEST_RESPAWN_DELAY_MS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 xsh_bin() xinit_script() -- inittab ?
+  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_TEST_EXIT_WHEN_IDLE=1 XSH_INIT_TEST_MAX_RESPAWNS=1 XSH_INIT_TEST_RESPAWN_DELAY_MS=1 XSH_LINUX_DRY_RUN=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 xsh_bin() xinit_script() -- $inittab ?
 
   test.eq(
     output,
@@ -120,10 +120,10 @@ wait
   let poweroff_inittab = fp"${root}/poweroff.inittab"
 
   poweroff_inittab.write("""::sysinit:/bin/echo boot
-ttyAMA0::poweroff:/usr/local/bin/xshi --no-config
+ttyAMA0::poweroff:/bin/xshi --no-config
 """)?
 
-  let poweroff_output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_LOG=linux_log XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 xsh_bin() xinit_script() -- poweroff_inittab ?
+  let poweroff_output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_LOG=$linux_log XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 xsh_bin() xinit_script() -- $poweroff_inittab ?
 
   test.eq(
     poweroff_output,
@@ -143,10 +143,10 @@ proc test_fast_shutdown_uses_owned_process_groups(ctx: TestContext) [fs, process
   inittab.write("""::sysinit:/bin/echo boot
 ::shutdown:/bin/echo down
 ::respawn:/usr/bin/daemon
-ttyAMA0::poweroff:/usr/local/bin/xshi --no-config
+ttyAMA0::poweroff:/bin/xshi --no-config
 """)?
 
-  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_FAST_SHUTDOWN=1 XSH_INIT_FINAL_CLEANUP=0 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_LOG=linux_log XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 xsh_bin() xinit_script() -- inittab ?
+  let output = run.text XINIT_TEST_ALLOW_NON_PID1=1 XSH_INIT_FAST_SHUTDOWN=1 XSH_INIT_FINAL_CLEANUP=0 XSH_LINUX_DRY_RUN=1 XSH_LINUX_DRY_RUN_LOG=$linux_log XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 xsh_bin() xinit_script() -- $inittab ?
 
   test.eq(
     output,
@@ -172,7 +172,7 @@ proc test_service_start_status_stop_and_check(ctx: TestContext) [fs, process, er
   let unix_log = fp"${root}/unix.jsonl"
   service_dir.mkdir()
   write_demo_service(fp"${service_dir}/demo.xsh", "process.command_argv(\"service\", [\"service\"])", "never", false, 0)?
-  let started = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log xsh_bin() xinit_script() -- "start" "demo" ?
+  let started = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log xsh_bin() xinit_script() -- "start" "demo" ?
 
   test.eq(
     started,
@@ -187,7 +187,7 @@ proc test_service_start_status_stop_and_check(ctx: TestContext) [fs, process, er
   let log_text = unix_log.read_text()?
   test.contains(log_text, "spawn_process_group")?
   test.contains(log_text, "log_path")?
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -195,7 +195,7 @@ proc test_service_start_status_stop_and_check(ctx: TestContext) [fs, process, er
 """,
   )?
 
-  let stopped = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log xsh_bin() xinit_script() -- "stop" "demo" ?
+  let stopped = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log xsh_bin() xinit_script() -- "stop" "demo" ?
 
   test.eq(
     stopped,
@@ -229,11 +229,9 @@ export let service = {
 }
 """)?
 
-  let bad_status = run.status xsh_bin() xinit_script() -- check bad 2> $err
-  assert_failed_with(bad_status, err, "module-check")?
-  test.contains(err.read_text()?, "check.pure-assignment")?
-  test.contains(err.read_text()?, bad.display())?
-  let missing_status = run.status xsh_bin() xinit_script() -- check missing 2> $err
+  let bad_status = run.status xsh_bin() xinit_script() -- check $bad 2> $err
+  assert_failed_with(bad_status, err, "schema check failed")?
+  let missing_status = run.status xsh_bin() xinit_script() -- check $missing 2> $err
   assert_failed_with(missing_status, err, "xinit-service")?
   test.contains(err.read_text()?, "failed to read service file")?
   test.contains(err.read_text()?, missing.display())?
@@ -283,21 +281,21 @@ proc test_dependency_planning_boot_list_graph_and_stop_refusal(ctx: TestContext)
     "need: [\"net\"], uses: [\"logger\"]",
   )?
 
-  let graph = run.text XINIT_SERVICE_DIR=service_dir xsh_bin() xinit_script() -- graph app ?
+  let graph = run.text XINIT_SERVICE_DIR=$service_dir xsh_bin() xinit_script() -- graph app ?
   test.contains(graph, "logger: deps=")?
   test.contains(graph, "firewall: deps=")?
   test.contains(graph, "net: deps=logger,firewall")?
   test.contains(graph, "app: deps=net,logger")?
-  let boot = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log xsh_bin() xinit_script() -- boot ?
+  let boot = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log xsh_bin() xinit_script() -- boot ?
   test.contains(boot, "app running")?
   test.ok(fp"${run_dir}/logger.json".exists()?)?
   test.ok(fp"${run_dir}/firewall.json".exists()?)?
   test.ok(fp"${run_dir}/net.json".exists()?)?
   test.ok(fp"${run_dir}/app.json".exists()?)?
-  let listed = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- list ?
+  let listed = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- list ?
   test.contains(listed, "app longrun targets=boot state=running ready=true")?
   test.contains(listed, "net longrun targets=boot state=running ready=true")?
-  let stop_net = run.status XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- stop net 2> $err
+  let stop_net = run.status XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- stop net 2> $err
   assert_failed_with(stop_net, err, "running dependents: app")?
 }
 
@@ -327,7 +325,7 @@ export proc status() [fs, process, env, error] -> Result[Str] {
 """,
   )?
 
-  let started = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start demo ?
+  let started = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start demo ?
 
   test.eq(
     started,
@@ -335,7 +333,7 @@ export proc status() [fs, process, env, error] -> Result[Str] {
 """,
   )?
 
-  let status = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -359,13 +357,13 @@ proc test_append_logs_and_log_none(ctx: TestContext) [fs, process, time, error] 
     0,
   )?
 
-  let started = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root xsh_bin() xinit_script() -- "start" "demo" ?
+  let started = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root xsh_bin() xinit_script() -- "start" "demo" ?
   test.contains(started, "demo running")?
   time.sleep(100ms)?
   let log_text = fp"${log_root}/demo/current".read_text()?
   test.contains(log_text, "service-out")?
   test.contains(log_text, "service-err")?
-  let logs = run.text XINIT_LOG_ROOT=log_root xsh_bin() xinit_script() -- logs demo ?
+  let logs = run.text XINIT_LOG_ROOT=$log_root xsh_bin() xinit_script() -- logs demo ?
   test.eq(logs, log_text)?
   let none_service_dir = fp"${root}/none-services"
   let none_run_dir = fp"${root}/none-run"
@@ -380,7 +378,7 @@ proc test_append_logs_and_log_none(ctx: TestContext) [fs, process, time, error] 
     0,
   )?
 
-  let none_started = run.text XINIT_SERVICE_DIR=none_service_dir XINIT_RUN_DIR=none_run_dir XINIT_LOG_ROOT=none_log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" ?
+  let none_started = run.text XINIT_SERVICE_DIR=$none_service_dir XINIT_RUN_DIR=$none_run_dir XINIT_LOG_ROOT=$none_log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" ?
 
   test.eq(
     none_started,
@@ -414,7 +412,7 @@ proc test_append_log_rotates_over_size_cap(ctx: TestContext) [fs, process, error
   # and begin a fresh `current`.
   fp"${log_root}/demo".mkdir()?
   fp"${log_root}/demo/current".write("0123456789AB")?
-  let _ = run.status XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root xsh_bin() xinit_script() -- start demo
+  let _ = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start demo ?
   test.eq(fp"${log_root}/demo/current.1".read_text()?, "0123456789AB")?
   test.eq(fp"${log_root}/demo/current".read_text()?, "")?
 }
@@ -428,7 +426,7 @@ proc test_status_compat_cgroup_and_log_open_failure(ctx: TestContext) [fs, proce
     "{\"name\":\"demo\",\"desired\":\"up\",\"state\":\"running\",\"pid\":1000,\"log_pid\":1001,\"restarts\":0}",
   )?
 
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -449,7 +447,7 @@ proc test_status_compat_cgroup_and_log_open_failure(ctx: TestContext) [fs, proce
     80,
   )?
 
-  let cgroup = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=cgroup_run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" ?
+  let cgroup = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$cgroup_run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" ?
 
   test.eq(
     cgroup,
@@ -459,9 +457,10 @@ proc test_status_compat_cgroup_and_log_open_failure(ctx: TestContext) [fs, proce
 
   test.contains(fp"${cgroup_run_dir}/demo.json".read_text()?, "\"cgroup_path\":\"dry-run:/xinit/demo\"")?
   let blocker = fp"${root}/not-a-dir"
+  let failed_run = fp"${root}/failed-run"
   blocker.write("file")?
   let err = fp"${root}/err"
-  let failed = run.status XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=fp"${root}/failed-run" XINIT_LOG_ROOT=blocker XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" 2> $err
+  let failed = run.status XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$failed_run XINIT_LOG_ROOT=$blocker XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- "start" "demo" 2> $err
   assert_failed_with(failed, err, "xinit-log")?
   test.ok(! fp"${root}/failed-run/demo.json".exists()?)?
 }
@@ -476,7 +475,7 @@ proc test_idempotent_start_and_supervise_restart(ctx: TestContext) [fs, process,
   write_demo_service(fp"${service_dir}/demo.xsh", "process.command_argv(\"service\", [\"service\"])", "never", false, 0)?
 
   for _ in [0, 1] {
-    let output = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log xsh_bin() xinit_script() -- "start" "demo" ?
+    let output = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log xsh_bin() xinit_script() -- "start" "demo" ?
 
     test.eq(
       output,
@@ -500,9 +499,9 @@ proc test_idempotent_start_and_supervise_restart(ctx: TestContext) [fs, process,
     0,
   )?
 
-  let supervise = run.text XINIT_SERVICE_DIR=supervise_service_dir XINIT_RUN_DIR=supervise_run_dir XINIT_LOG_ROOT=supervise_log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=supervise_unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- "supervise" "demo" ?
+  let supervise = run.text XINIT_SERVICE_DIR=$supervise_service_dir XINIT_RUN_DIR=$supervise_run_dir XINIT_LOG_ROOT=$supervise_log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$supervise_unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- "supervise" "demo" ?
   test.eq(supervise, "")?
-  let status = run.text XINIT_RUN_DIR=supervise_run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$supervise_run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -527,7 +526,7 @@ proc test_status_reconciles_stale_pid(ctx: TestContext) [fs, process, error] {
     f"{\"name\":\"alive\",\"desired\":\"up\",\"state\":\"running\",\"pid\":${self_pid},\"restarts\":0}",
   )?
 
-  let alive = run.text XINIT_RUN_DIR=run_dir xsh_bin() xinit_script() -- status alive ?
+  let alive = run.text XINIT_RUN_DIR=$run_dir xsh_bin() xinit_script() -- status alive ?
 
   test.eq(
     alive,
@@ -542,7 +541,7 @@ proc test_status_reconciles_stale_pid(ctx: TestContext) [fs, process, error] {
     "{\"name\":\"gone\",\"desired\":\"up\",\"state\":\"running\",\"pid\":2147480000,\"restarts\":2}",
   )?
 
-  let gone = run.text XINIT_RUN_DIR=run_dir xsh_bin() xinit_script() -- status gone ?
+  let gone = run.text XINIT_RUN_DIR=$run_dir xsh_bin() xinit_script() -- status gone ?
 
   test.eq(
     gone,
@@ -571,7 +570,7 @@ proc test_status_detects_recycled_pid(ctx: TestContext) [fs, process, error] {
     f"{\"name\":\"ours\",\"desired\":\"up\",\"state\":\"running\",\"pid\":${self_pid},\"start_time_ms\":${self_start},\"restarts\":0}",
   )?
 
-  let ours = run.text XINIT_RUN_DIR=run_dir xsh_bin() xinit_script() -- status ours ?
+  let ours = run.text XINIT_RUN_DIR=$run_dir xsh_bin() xinit_script() -- status ours ?
 
   test.eq(
     ours,
@@ -585,7 +584,7 @@ proc test_status_detects_recycled_pid(ctx: TestContext) [fs, process, error] {
     f"{\"name\":\"recycled\",\"desired\":\"up\",\"state\":\"running\",\"pid\":${self_pid},\"start_time_ms\":1,\"restarts\":0}",
   )?
 
-  let recycled = run.text XINIT_RUN_DIR=run_dir xsh_bin() xinit_script() -- status recycled ?
+  let recycled = run.text XINIT_RUN_DIR=$run_dir xsh_bin() xinit_script() -- status recycled ?
 
   test.eq(
     recycled,
@@ -618,9 +617,9 @@ proc test_supervise_defers_restart_with_backoff(ctx: TestContext) [fs, process, 
 """,
   )?
 
-  let supervise = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- "supervise" "demo" ?
+  let supervise = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- "supervise" "demo" ?
   test.eq(supervise, "")?
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -667,9 +666,9 @@ proc test_scan_respawns_one_unit_independently(ctx: TestContext) [fs, process, e
 """,
   )?
 
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- scan boot ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1001 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- scan boot ?
   test.eq(scan, "")?
-  let logger_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
+  let logger_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
 
   test.eq(
     logger_status,
@@ -677,7 +676,7 @@ proc test_scan_respawns_one_unit_independently(ctx: TestContext) [fs, process, e
 """,
   )?
 
-  let worker_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status worker ?
+  let worker_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status worker ?
 
   test.eq(
     worker_status,
@@ -723,9 +722,9 @@ proc test_scan_gates_start_on_dependency_readiness(ctx: TestContext) [fs, proces
 """,
   )?
 
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=3 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll XSH_UNIX_DRY_RUN_READY=0 xsh_bin() xinit_script() -- scan app ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=3 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll XSH_UNIX_DRY_RUN_READY=0 xsh_bin() xinit_script() -- scan app ?
   test.eq(scan, "")?
-  let logger_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
+  let logger_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
 
   test.eq(
     logger_status,
@@ -734,7 +733,7 @@ proc test_scan_gates_start_on_dependency_readiness(ctx: TestContext) [fs, proces
   )?
 
   # app never started: its need is not ready, so no instance was spawned.
-  let app_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status app ?
+  let app_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status app ?
 
   test.eq(
     app_status,
@@ -781,9 +780,9 @@ proc test_scan_honors_inbox_down_request(ctx: TestContext) [fs, process, error] 
   # inbox before reconciling, so app is parked (never spawned) while logger
   # still comes up — the control plane overriding the default desired state.
   fp"${run_dir}/inbox/app".write("down")?
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll xsh_bin() xinit_script() -- scan app ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll xsh_bin() xinit_script() -- scan app ?
   test.eq(scan, "")?
-  let logger_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
+  let logger_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status logger ?
 
   test.eq(
     logger_status,
@@ -791,7 +790,7 @@ proc test_scan_honors_inbox_down_request(ctx: TestContext) [fs, process, error] 
 """,
   )?
 
-  let app_status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status app ?
+  let app_status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status app ?
 
   test.eq(
     app_status,
@@ -826,9 +825,9 @@ proc test_scan_notify_readiness_reaches_running(ctx: TestContext) [fs, process, 
   # A notify service is spawned with a readiness pipe (state "starting", not
   # ready); the scanner polls notify_ready and promotes it to running. The dry
   # run reports the service ready (XSH_UNIX_DRY_RUN_READY defaults to "1").
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=2 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll xsh_bin() xinit_script() -- scan demo ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=2 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log XSH_UNIX_DRY_RUN_EVENT_KIND=poll xsh_bin() xinit_script() -- scan demo ?
   test.eq(scan, "")?
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -864,9 +863,9 @@ proc test_scan_notify_readiness_times_out(ctx: TestContext) [fs, process, error]
   # The service never signals readiness (XSH_UNIX_DRY_RUN_READY=0) and the ready
   # timeout is zero, so the scanner promotes it to running but not ready rather
   # than wedging.
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=2 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=poll XSH_UNIX_DRY_RUN_READY=0 xsh_bin() xinit_script() -- scan demo ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=2 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=poll XSH_UNIX_DRY_RUN_READY=0 xsh_bin() xinit_script() -- scan demo ?
   test.eq(scan, "")?
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,
@@ -908,7 +907,7 @@ proc test_start_tolerates_optional_uses_failure(ctx: TestContext) [fs, process, 
 """,
   )?
 
-  let started = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start app ?
+  let started = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start app ?
 
   test.eq(
     started,
@@ -929,7 +928,7 @@ proc test_start_tolerates_optional_uses_failure(ctx: TestContext) [fs, process, 
 """,
   )?
 
-  let needy_status = run.status XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start needy 2> $err
+  let needy_status = run.status XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- start needy 2> $err
   assert_failed_with(needy_status, err, "flaky: start failed")?
 }
 
@@ -962,7 +961,7 @@ export proc reload() [fs, process, env, error] -> Result[Unit] {
     "{\"name\":\"hooked\",\"desired\":\"up\",\"state\":\"running\",\"pid\":1000,\"restarts\":0}",
   )?
 
-  let hooked = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=unix_log xsh_bin() xinit_script() -- reload hooked ?
+  let hooked = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$unix_log xsh_bin() xinit_script() -- reload hooked ?
   test.contains(hooked, "hooked running")?
 
   # The hook ran (wrote the sentinel) and, since reload runs the hook XOR sends
@@ -988,7 +987,7 @@ export proc reload() [fs, process, env, error] -> Result[Unit] {
     "{\"name\":\"plain\",\"desired\":\"up\",\"state\":\"running\",\"pid\":1000,\"restarts\":0}",
   )?
 
-  let _ = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=plain_log xsh_bin() xinit_script() -- reload plain ?
+  let _ = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_LOG=$plain_log xsh_bin() xinit_script() -- reload plain ?
   let plain_text = plain_log.read_text()?
   test.contains(plain_text, "\"op\":\"kill_process_group\"")?
   test.contains(plain_text, "\"signal\":\"HUP\"")?
@@ -1019,10 +1018,10 @@ export proc finish() [fs, process, env, error] -> Result[Unit] {
 """,
   )?
 
-  let scan = run.text XINIT_SERVICE_DIR=service_dir XINIT_RUN_DIR=run_dir XINIT_LOG_ROOT=log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- scan demo ?
+  let scan = run.text XINIT_SERVICE_DIR=$service_dir XINIT_RUN_DIR=$run_dir XINIT_LOG_ROOT=$log_root XINIT_TEST_MAX_EVENTS=1 XSH_UNIX_DRY_RUN=1 XSH_UNIX_DRY_RUN_EVENT_KIND=child XSH_UNIX_DRY_RUN_PID=1000 XSH_UNIX_DRY_RUN_EXIT_CODE=1 xsh_bin() xinit_script() -- scan demo ?
   test.eq(scan, "")?
   test.eq(touched.read_text()?, "finished")?
-  let status = run.text XINIT_RUN_DIR=run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
+  let status = run.text XINIT_RUN_DIR=$run_dir XSH_UNIX_DRY_RUN=1 xsh_bin() xinit_script() -- status demo ?
 
   test.eq(
     status,

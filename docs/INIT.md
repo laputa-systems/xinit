@@ -77,7 +77,7 @@ Child exits are drained before lifecycle signals are processed. On Linux,
 ::sysinit:/usr/lib/init/rc.boot
 ::restart:/usr/bin/xinit /etc/inittab
 ::shutdown:/usr/lib/init/rc.shutdown
-ttyAMA0::poweroff:/usr/local/bin/xshi --no-config
+ttyAMA0::poweroff:/bin/xshi --no-config
 tty1::respawn:/bin/getty 38400 tty1
 ```
 

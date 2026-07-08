@@ -1,4 +1,4 @@
-#!/usr/local/bin/xsh
+#!/bin/xsh
 for dir in [/proc, /sys, /run, /dev, /dev/pts, /dev/shm] {
   if ! fs.exists(dir)? {
     dir.mkdir()?

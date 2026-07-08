@@ -1,4 +1,4 @@
-#!/usr/local/bin/xsh
+#!/bin/xsh
 for hook in g"/usr/lib/init/rc.d/*.pre.shutdown" {
   if hook.metadata()?.kind == "file" {
     run hook ?
