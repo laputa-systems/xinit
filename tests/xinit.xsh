@@ -230,7 +230,8 @@ export let service = {
 """)?
 
   let bad_status = run.status xsh_bin() xinit_script() -- check $bad 2> $err
-  assert_failed_with(bad_status, err, "schema check failed")?
+  assert_failed_with(bad_status, err, "module-load")?
+  test.contains(err.read_text()?, "loaded module body failed to check")?
   let missing_status = run.status xsh_bin() xinit_script() -- check $missing 2> $err
   assert_failed_with(missing_status, err, "xinit-service")?
   test.contains(err.read_text()?, "failed to read service file")?

@@ -668,9 +668,12 @@ proc all_services() [fs, process, env, error] -> Result[List[Service]] {
     return []
   }
 
-  return [load_service_path(entry.path)? for entry in fs.children(dir)?
-    |> where .kind == "file" and .name.ends_with(".xsh")
-    |> sort-by .name]
+  return [
+    load_service_path(entry.path)?
+    for entry in fs.children(dir)?
+      |> where .kind == "file" and .name.ends_with(".xsh")
+      |> sort-by .name
+  ]
 }
 
 pure service_names(services: List[Service]) -> List[Str] {
@@ -2049,16 +2052,7 @@ proc graph_service(name: Str) [fs, process, env, error] {
   }
 }
 
-proc control(argv: List[Str]) [fs, process, env, time, error, io] {
-  if argv.len() != 2 {
-    return Err(
-      XinitError.Failed("xinit-control", "usage: xinit <start|stop|restart|reload|status|logs|supervise> SERVICE"),
-    )
-  }
-
-  let verb = argv[0]
-  let name = argv[1]
-
+proc control(verb: Str, name: Str) [fs, process, env, time, error, io] {
   if verb == "start" or verb == "up" {
     start_service(name)?
   } else if verb == "stop" or verb == "down" {
@@ -2081,60 +2075,135 @@ proc control(argv: List[Str]) [fs, process, env, time, error, io] {
 }
 
 proc main(...argv: List[Str]) [fs, process, env, time, error, io] {
-  if argv.len() == 0 {
-    run_pid1(fp"${env_value("XSH_INIT_INITTAB", "/etc/inittab")}")?
-    return
-  }
+  let parsed = cli.commands(
+    argv,
+    rootless_default: "pid1",
+    commands: {
+      pid1: {
+        rest: "args",
+      },
+      help: {
+        aliases: [
+          "--help",
+          "-h",
+        ],
+        rest: "args",
+      },
+      boot: {
+        rest: "args",
+      },
+      scan: {
+        rest: "args",
+      },
+      list: {
+        rest: "args",
+      },
+      graph: {
+        rest: "args",
+      },
+      start: {
+        form: "start SERVICE",
+        aliases: [
+          "up",
+        ],
+        rest: "args",
+      },
+      stop: {
+        form: "stop SERVICE",
+        aliases: [
+          "down",
+        ],
+        rest: "args",
+      },
+      restart: {
+        form: "restart SERVICE",
+        rest: "args",
+      },
+      reload: {
+        form: "reload SERVICE",
+        rest: "args",
+      },
+      status: {
+        form: "status SERVICE",
+        rest: "args",
+      },
+      logs: {
+        form: "logs SERVICE",
+        rest: "args",
+      },
+      supervise: {
+        form: "supervise SERVICE",
+        rest: "args",
+      },
+      check: {
+        rest: "args",
+      },
+    },
+    fallback_command: {positionals: ["inittab"], types: {inittab: "Path"}, rest: "args"},
+  )?
 
-  if argv[0] == "--help" or argv[0] == "-h" {
+  if parsed.command == "pid1" {
+    if parsed.args.len() > 0 {
+      return Err(XinitError.Failed("xinit-control", "usage: xinit"))
+    }
+
+    run_pid1(fp"${env_value("XSH_INIT_INITTAB", "/etc/inittab")}")?
+  } else if parsed.command == "help" {
+    if parsed.args.len() > 0 {
+      return Err(XinitError.Failed("xinit-control", "usage: xinit help"))
+    }
+
     io.write_stdout(usage_text())?
-  } else if argv[0] == "boot" {
-    if argv.len() > 2 {
+  } else if parsed.command == "boot" {
+    if parsed.args.len() > 1 {
       return Err(XinitError.Failed("xinit-control", "usage: xinit boot [TARGET]"))
     }
 
-    boot_target(argv.get(1, "boot"))?
-  } else if argv[0] == "scan" {
-    if argv.len() > 2 {
+    boot_target(parsed.args.get(0, "boot"))?
+  } else if parsed.command == "scan" {
+    if parsed.args.len() > 1 {
       return Err(XinitError.Failed("xinit-control", "usage: xinit scan [SERVICE|TARGET]"))
     }
 
-    scan_command(argv.get(1, "boot"))?
-  } else if argv[0] == "list" {
-    if argv.len() != 1 {
+    scan_command(parsed.args.get(0, "boot"))?
+  } else if parsed.command == "list" {
+    if parsed.args.len() > 0 {
       return Err(XinitError.Failed("xinit-control", "usage: xinit list"))
     }
 
     list_services()?
-  } else if argv[0] == "graph" {
-    if argv.len() > 2 {
+  } else if parsed.command == "graph" {
+    if parsed.args.len() > 1 {
       return Err(XinitError.Failed("xinit-control", "usage: xinit graph [SERVICE|TARGET]"))
     }
 
-    let target = argv.get(1, "boot")
-
+    let target = parsed.args.get(0, "boot")
     match load_service(target) {
       Ok(_) => graph_service(target)?
       Err(_) => graph_target(target)?
     }
-  } else if argv[0] == "start" or argv[0] == "up" or argv[0] == "stop" or argv[0] == "down" or argv[0] == "restart" or argv[0] == "reload" or argv[0] == "status" or argv[0] == "logs" or argv[0] == "supervise" {
-    control(argv)?
-  } else if argv[0] == "check" {
-    if argv.len() > 2 {
+  } else if parsed.command == "start" or parsed.command == "stop" or parsed.command == "restart" or parsed.command == "reload" or parsed.command == "status" or parsed.command == "logs" or parsed.command == "supervise" {
+    if parsed.args.len() > 0 {
+      return Err(XinitError.Failed("xinit-control", "usage: xinit <action> SERVICE"))
+    }
+
+    control(parsed.action, parsed.service)?
+  } else if parsed.command == "check" {
+    if parsed.args.len() > 1 {
       return Err(XinitError.Failed("xinit-control", "usage: xinit check [SERVICE|PATH]"))
     }
 
-    if argv.len() == 1 {
+    if parsed.args.len() == 0 {
       check_service()?
     } else {
-      check_service(argv[1])?
+      check_service(parsed.args[0])?
     }
-  } else if argv[0].starts_with("-") {
-    return Err(XinitError.Failed("xinit-control", f"unknown option '${argv[0]}'"))
-  } else if argv.len() == 1 {
-    run_pid1(fp"${argv[0]}")?
   } else {
-    return Err(XinitError.Failed("xinit-control", "usage: xinit [start|stop|status|logs|supervise SERVICE]"))
+    if parsed.args.len() > 0 {
+      return Err(XinitError.Failed("xinit-control", "usage: xinit INITTAB"))
+    }
+
+    run_pid1(parsed.inittab)?
   }
 }
 
